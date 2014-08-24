@@ -38,11 +38,11 @@ public class MatAndTexFunction
         {
             case "0":
                 tex = t.EncodeToPNG();
-                File.WriteAllBytes(Application.dataPath + "/Resources/" + savePath + "/" + texName + ".png", tex);
+                File.WriteAllBytes(savePath + "/" + texName + ".png", tex);
                 break;
             case "1":
                 tex = t.EncodeToJPG();
-                File.WriteAllBytes(Application.dataPath + "/Resources/" + savePath + "/" + texName + ".jpg", tex);
+                File.WriteAllBytes(savePath + "/" + texName + ".jpg", tex);
                 break;
         }
     }
@@ -163,7 +163,7 @@ public class MatAndTexFunction
         mat.SetTexture("_MainTex", tex);
         mat.SetColor("_Color", Color.white);
         //将材质放入创建的文件夹中  
-        AssetDatabase.CreateAsset(mat, "Assets/Resources/" + savePath + "/" + matName + ".mat");
+        AssetDatabase.CreateAsset(mat, savePath + "/" + matName + ".mat");
         AssetDatabase.Refresh();
     }//保存材质
     public Texture2D checkCameraCa(Camera cam)
@@ -174,29 +174,5 @@ public class MatAndTexFunction
         t.ReadPixels(r, 0, 0);
         return t;
     }
-    public void pathSet()
-    {
-        /*string path = Application.dataPath;
-        if (!Directory.Exists(path + "/Resources"))
-        {
-            Directory.CreateDirectory(path + "/Resources");
-            Directory.CreateDirectory(path + "/Resources"+"/Texture");
-            Directory.CreateDirectory(path + "/Resources" + "/Materials");
-            
-        }//如果不存在Resources文件夹则创建，同时创建Resources/Texture，Resources/Materials文件夹
-        else 
-        {
-            if (!Directory.Exists(Application.dataPath + "/Resources/Texture"))
-            {
-                Directory.CreateDirectory(path + "/Resources" + "/Texture");
-            }
-            if (!Directory.Exists(Application.dataPath + "/Resources/Materials"))
-            {
-                Directory.CreateDirectory(path + "/Resources" + "/Materials");
-            }
-        }//如果有则检查是否有Texture和Materials文件夹，没则创建*/
-        Directory.CreateDirectory(Application.dataPath + "/Resources" + "/Texture" + "/_tex");
-        Directory.CreateDirectory(Application.dataPath + "/Resources" + "/Materials" + "/_mat");
-        AssetDatabase.Refresh();
-    }//判断是否存在文件夹存在，然后创建
+
 }

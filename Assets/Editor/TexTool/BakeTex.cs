@@ -16,29 +16,56 @@ public class BakeTex : EditorWindow {
     string[] useMat = new string[2] { "Yes", "No" };
     int useMatNum = 0;
 
-
+    string texPath = "Assets" + "/Resources" + "/Texture" + "/_tex";
+    string matPath = "Assets" + "/Resources" + "/Materials" + "/_mat";
 
     [MenuItem("TexTools/BakeTex")]
     static void TexWindow()
     {
-        Rect re = new Rect(0, 0, 300, 260);
+        Rect re = new Rect(0, 0, 300, 350);//定义窗口大小 
         BakeTex window = (BakeTex)EditorWindow.GetWindowWithRect(typeof(BakeTex), re, true, "BakeTex");
         window.Show();
     }
     void OnGUI(){
 
         GUILayout.BeginHorizontal();
+        if (GUI.Button(new Rect(3, position.height - 55, position.width - 6, 25), "Bake"))
+        {
+            if (texPath.Length != 0 && matPath.Length != 0)
+            {
+                if (texPath == "Assets" + "/Resources" + "/Texture" + "/_tex")
+                {
+                    Directory.CreateDirectory("Assets" + "/Resources" + "/Texture" + "/_tex");
+                    AssetDatabase.Refresh();
+                }//如果贴图地址为默认，则判断？创建默认保存文件夹
+                if (matPath == "Assets" + "/Resources" + "/Materials" + "/_mat")
+                {
+                    Directory.CreateDirectory("Assets" + "/Resources" + "/Materials" + "/_mat");
+                    AssetDatabase.Refresh();
+                }//同贴图
 
-        
+                create(texSizeSelNum, texFormatNum, useMatNum, texPath, matPath);//贴图文件夹和材质文件夹都有效的时候，执行烘焙
+            }
+            else//如果不是同时具有有效地址，则弹出警告，并将路径重置为有效路径
+            {
+                EditorUtility.DisplayDialog("警告！", "必须设置一个保存位置，点击“确认”使用默认位置", "确认");
+                if (texPath.Length == 0)
+                {
+                    texPath = "Assets" + "/Resources" + "/Texture" + "/_tex";
+                }
+                if (matPath.Length == 0)
+                {
+                    matPath = "Assets" + "/Resources" + "/Materials" + "/_mat";
+                }
+                
+            }
+        }
+
         if (GUI.Button(new Rect(3,position.height-28,position.width-6,25),"Close"))
         {
             this.Close();
         }
-        if (GUI.Button(new Rect(3, position.height - 53, position.width - 6, 25), "Bake"))
-        {
-            create(texSizeSelNum,texFormatNum,useMatNum);
 
-        }
         GUILayout.EndHorizontal();
 
 
@@ -64,8 +91,43 @@ public class BakeTex : EditorWindow {
         GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal();
-        GUILayout.Label("说明：\n材质默认保存于\n Resources\\Materials\\_mat \n贴图保存于\n Resources\\Texture\\_tex");
+        GUILayout.Label("设置保存路径:");
         GUILayout.EndHorizontal();
+
+        GUILayout.BeginHorizontal();
+        //GUILayout.Label("说明：\n材质默认保存于\n Resources\\Materials\\_mat \n贴图保存于\n Resources\\Texture\\_tex");
+        if (GUILayout.Button("Texture Save"))
+        {
+            string texPathTemp = EditorUtility.SaveFolderPanel("Selection The Floder to Save Texture", "Assets", "");
+            texPath = texPathTemp.Substring(Application.dataPath.Length - 6, texPathTemp.Length-(Application.dataPath.Length-6));
+        }
+        GUILayout.EndHorizontal();
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("贴图位置：\n" + texPath);
+        GUILayout.EndHorizontal();
+
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("Materials Save"))
+        {
+            string matPathTemp = EditorUtility.SaveFolderPanel("Selection The Floder to Save Material", "Assets", "");
+            matPath = matPathTemp.Substring(Application.dataPath.Length - 6, matPathTemp.Length - (Application.dataPath.Length - 6));
+        }
+        GUILayout.EndHorizontal();
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("材质位置：\n" + matPath);
+        GUILayout.EndHorizontal();
+
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("使用默认地址"))
+        {
+            texPath = Application.dataPath.Substring(Application.dataPath.Length - 6, 6) + "/Resources" + "/Texture" + "/_tex";
+            matPath = Application.dataPath.Substring(Application.dataPath.Length - 6, 6) + "/Resources" + "/Materials" + "/_mat";
+        }
+        GUILayout.EndHorizontal();
+
+
         Repaint();  //重绘窗口
     }
 
@@ -93,7 +155,7 @@ public class BakeTex : EditorWindow {
         return res;
     }//取得对象总数和材质总数
 
-    public void create(int texSiez,int texFormat,int useMat)
+    public void create(int texSiez,int texFormat,int useMat,string texPath,string matPath)
     {
         GameObject[] obj = Selection.gameObjects;
         //将选择的对象读入
@@ -109,8 +171,6 @@ public class BakeTex : EditorWindow {
         //调用
         string[] texNames = new string[5]{"_MainTex", "_BumpMap", "_Detail", "_ParallaxMap", "_Parallax"};
 
-        cre.pathSet();
-        //检查和创建路径与保存文件夹
         for (int i = 0; i < obj.Length; i++)
         {
             cre.getAllChild(obj[i].transform, ref matName, ref nameBox, ref matList);
@@ -158,10 +218,19 @@ public class BakeTex : EditorWindow {
                     t.SetPixel(0, 0, matList[j].color);
                 }//如果都没，返回像素1，color颜色的贴图
             }
-            cre.saveTex(t, "Texture/_tex", matList[j].name,texFormat); 
+            cre.saveTex(t, texPath, matList[j].name,texFormat); 
             AssetDatabase.Refresh();
-            t = (Texture2D)Resources.Load ("Texture/_tex/" + matList[j].name,typeof(Texture2D)) ;
-            cre.SaveMatAssest(matList[j].name,t, "Materials/_mat");
+            switch (texFormatNum + "")
+            {
+                case "0":
+                    t = (Texture2D)Resources.LoadAssetAtPath(texPath + "/" + matList[j].name + ".png", typeof(Texture2D));
+                    break;
+                case "1":
+                    t = (Texture2D)Resources.LoadAssetAtPath(texPath + "/" + matList[j].name + ".jpg", typeof(Texture2D));
+                    break;
+            }
+            
+            cre.SaveMatAssest(matList[j].name,t, matPath);
         }
         AssetDatabase.Refresh();
 
@@ -172,7 +241,7 @@ public class BakeTex : EditorWindow {
                 {
                     for (int l = 0; l < nameBox[matList[k].name].Count; l++)
                     {
-                        nameBox[matList[k].name][l].renderer.material = (Material)Resources.Load("Materials/_mat/" + matList[k].name, typeof(Material));//用Resources.Load载入时，路径的最开头不可有/
+                                nameBox[matList[k].name][l].renderer.material = (Material)Resources.LoadAssetAtPath(matPath + "/" + matList[k].name + ".mat", typeof(Material));
                     }
                 }//将场景上的对象材质重定义为新保存的材质
                 break;
