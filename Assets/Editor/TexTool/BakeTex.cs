@@ -31,7 +31,7 @@ public class BakeTex : EditorWindow {
         GUILayout.BeginHorizontal();
         if (GUI.Button(new Rect(3, position.height - 55, position.width - 6, 25), "Bake"))
         {
-            if (texPath.Length != 0 && matPath.Length != 0)
+            if (texPath.Length != 0 && matPath.Length != 0 && Directory.Exists(texPath) == true && Directory.Exists(matPath) == true)
             {
                 if (texPath == "Assets" + "/Resources" + "/Texture" + "/_tex")
                 {
@@ -43,17 +43,24 @@ public class BakeTex : EditorWindow {
                     Directory.CreateDirectory("Assets" + "/Resources" + "/Materials" + "/_mat");
                     AssetDatabase.Refresh();
                 }//同贴图
+                if (getAllChileInfo()[0] != 0)
+                {                
+                    create(texSizeSelNum, texFormatNum, useMatNum, texPath, matPath); //贴图文件夹和材质文件夹都有效的时候，执行烘焙
 
-                create(texSizeSelNum, texFormatNum, useMatNum, texPath, matPath);//贴图文件夹和材质文件夹都有效的时候，执行烘焙
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("警告！", "请至少选择一个以上的对象\nヽ(≧Д≦)ノ", "好的，我去选");
+                }
             }
             else//如果不是同时具有有效地址，则弹出警告，并将路径重置为有效路径
             {
                 EditorUtility.DisplayDialog("警告！", "必须设置一个保存位置，点击“确认”使用默认位置", "确认");
-                if (texPath.Length == 0)
+                if (texPath.Length == 0 || !Directory.Exists(texPath))
                 {
                     texPath = "Assets" + "/Resources" + "/Texture" + "/_tex";
                 }
-                if (matPath.Length == 0)
+                if (matPath.Length == 0 || !Directory.Exists(matPath))
                 {
                     matPath = "Assets" + "/Resources" + "/Materials" + "/_mat";
                 }
@@ -100,6 +107,7 @@ public class BakeTex : EditorWindow {
         {
             string texPathTemp = EditorUtility.SaveFolderPanel("Selection The Floder to Save Texture", "Assets", "");
             texPath = texPathTemp.Substring(Application.dataPath.Length - 6, texPathTemp.Length-(Application.dataPath.Length-6));
+            AssetDatabase.Refresh();
         }
         GUILayout.EndHorizontal();
 
@@ -112,6 +120,7 @@ public class BakeTex : EditorWindow {
         {
             string matPathTemp = EditorUtility.SaveFolderPanel("Selection The Floder to Save Material", "Assets", "");
             matPath = matPathTemp.Substring(Application.dataPath.Length - 6, matPathTemp.Length - (Application.dataPath.Length - 6));
+            AssetDatabase.Refresh();
         }
         GUILayout.EndHorizontal();
 
