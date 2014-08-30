@@ -94,7 +94,8 @@ public class MatAndTexFunction
         GameObject plane;
         List<GameObject> light = new List<GameObject>();
 
-        plane = (GameObject)GameObject.Instantiate(Resources.Load("Prefab/Plane"));
+        //plane = (GameObject)GameObject.Instantiate(Resources.Load("Prefab/Plane"));
+        plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
         plane.transform.position = new Vector3(0, 0, 0);
         plane.layer = 30;
         plane.name = "_renderPlane";

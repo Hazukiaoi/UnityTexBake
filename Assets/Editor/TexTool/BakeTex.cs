@@ -19,6 +19,9 @@ public class BakeTex : EditorWindow {
     string texPath = "Assets" + "/Resources" + "/Texture" + "/_tex";
     string matPath = "Assets" + "/Resources" + "/Materials" + "/_mat";
 
+
+    //string assetPath = null;//临时记录材质路径用于判断是否已经被更新
+
     [MenuItem("TexTools/BakeTex")]
     static void TexWindow()
     {
@@ -31,7 +34,7 @@ public class BakeTex : EditorWindow {
         GUILayout.BeginHorizontal();
         if (GUI.Button(new Rect(3, position.height - 55, position.width - 6, 25), "Bake"))
         {
-            if (texPath.Length != 0 && matPath.Length != 0 && Directory.Exists(texPath) == true && Directory.Exists(matPath) == true)
+            if (texPath.Length != 0 && matPath.Length != 0)
             {
                 if (texPath == "Assets" + "/Resources" + "/Texture" + "/_tex")
                 {
@@ -43,17 +46,33 @@ public class BakeTex : EditorWindow {
                     Directory.CreateDirectory("Assets" + "/Resources" + "/Materials" + "/_mat");
                     AssetDatabase.Refresh();
                 }//同贴图
-                if (getAllChileInfo()[0] != 0)
-                {                
-                    create(texSizeSelNum, texFormatNum, useMatNum, texPath, matPath); //贴图文件夹和材质文件夹都有效的时候，执行烘焙
+                if (Directory.Exists(texPath) == true && Directory.Exists(matPath) == true)
+                {
+                    if (getAllChileInfo()[0] != 0)
+                    {
+                        create(texSizeSelNum, texFormatNum, useMatNum, texPath, matPath); //贴图文件夹和材质文件夹都有效的时候，执行烘焙
+                    }
+                    else
+                    {
+                        EditorUtility.DisplayDialog("警告！", "请至少选择一个以上的对象\nヽ(≧Д≦)ノ", "好的，我去选");
+                    }//如果没有选中对象
+                }
+                else//如果不是同时具有有效地址，则弹出警告，并将路径重置为有效路径
+                {
+                    EditorUtility.DisplayDialog("警告！", "必须设置一个保存位置，点击“确认”使用默认位置", "确认");
+                    if (texPath.Length == 0 || !Directory.Exists(texPath))
+                    {
+                        texPath = "Assets" + "/Resources" + "/Texture" + "/_tex";
+                    }
+                    if (matPath.Length == 0 || !Directory.Exists(matPath))
+                    {
+                        matPath = "Assets" + "/Resources" + "/Materials" + "/_mat";
+                    }
 
                 }
-                else
-                {
-                    EditorUtility.DisplayDialog("警告！", "请至少选择一个以上的对象\nヽ(≧Д≦)ノ", "好的，我去选");
-                }
+                
             }
-            else//如果不是同时具有有效地址，则弹出警告，并将路径重置为有效路径
+            else//如果不是同时具有地址，则弹出警告，并将路径重置为有效路径
             {
                 EditorUtility.DisplayDialog("警告！", "必须设置一个保存位置，点击“确认”使用默认位置", "确认");
                 if (texPath.Length == 0 || !Directory.Exists(texPath))
@@ -176,8 +195,12 @@ public class BakeTex : EditorWindow {
         //创建材质名与对象关联字典
         Texture2D t = null;
         //临时贴图
+
+        Material[] matTmp = null;//创建用于最后更新对象材质的时候的材质数组
+
         MatAndTexFunction cre = new MatAndTexFunction();
         //调用
+
         string[] texNames = new string[5]{"_MainTex", "_BumpMap", "_Detail", "_ParallaxMap", "_Parallax"};
 
         for (int i = 0; i < obj.Length; i++)
@@ -246,17 +269,23 @@ public class BakeTex : EditorWindow {
         switch (useMat + "")
         {
             case "0":
-                for (int k = 0; k < matList.Count; k++)
+
+                for (int k = 0; k < obj.Length; k++)
                 {
-                    for (int l = 0; l < nameBox[matList[k].name].Count; l++)
+                    matTmp = new Material[obj[k].renderer.sharedMaterials.Length];
+
+                    for (int l = 0; l < obj[k].renderer.sharedMaterials.Length; l++)
                     {
-                                nameBox[matList[k].name][l].renderer.material = (Material)Resources.LoadAssetAtPath(matPath + "/" + matList[k].name + ".mat", typeof(Material));
+                        //obj[k].renderer.sharedMaterials[l] = (Material)Resources.LoadAssetAtPath(matPath + "/" + obj[k].renderer.sharedMaterials[l].name + ".mat", typeof(Material));
+
+                        matTmp[l] = (Material)Resources.LoadAssetAtPath(matPath + "/" + obj[k].renderer.sharedMaterials[l].name + ".mat", typeof(Material));
+
                     }
-                }//将场景上的对象材质重定义为新保存的材质
-                break;
+                    obj[k].renderer.sharedMaterials = matTmp;
+                    matTmp = null;
+                }
+                    break;
         }
-        
-           
             cre.breakScene();
     }
 }
