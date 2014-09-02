@@ -29,6 +29,8 @@ public class BakeTex : EditorWindow {
         BakeTex window = (BakeTex)EditorWindow.GetWindowWithRect(typeof(BakeTex), re, true, "BakeTex");
         window.Show();
     }
+
+
     void OnGUI(){
 
         GUILayout.BeginHorizontal();
@@ -159,26 +161,28 @@ public class BakeTex : EditorWindow {
         Repaint();  //重绘窗口
     }
 
+
     public int[] getAllChileInfo()
     {
         MatAndTexFunction gac = new MatAndTexFunction();
-        string matName = null;
-        Dictionary<string, List<Transform>> nameBox = new Dictionary<string, List<Transform>>();
+        //string matName = null;
+        //Dictionary<string, List<Transform>> nameBox = new Dictionary<string, List<Transform>>();
         List<Material> matList = new List<Material>();
-        GameObject[] tran = Selection.gameObjects;
-        int num = 0;
+        List<Transform> objMatRefList = new List<Transform>();
+
+        GameObject[] obj = Selection.gameObjects;
+
+        //int num = 0;
         int[] res = new int[2] {0 ,0};
 
 
-        for (int i = 0; i < tran.Length; i++)
+        for (int i = 0; i < obj.Length; i++)
         {
-            gac.getAllChild(tran[i].transform, ref matName, ref nameBox, ref matList);
+
+            gac.getAllChild(obj[i].transform, ref matList, ref objMatRefList);
+               
         }
-        for (int j = 0; j < matList.Count; j++)
-        {
-            num += nameBox[matList[j].name].Count;
-        }
-        res[0] = num;
+        res[0] = objMatRefList.Count;
         res[1] = matList.Count;
         return res;
     }//取得对象总数和材质总数
@@ -187,25 +191,44 @@ public class BakeTex : EditorWindow {
     {
         GameObject[] obj = Selection.gameObjects;
         //将选择的对象读入
+
         List<Material> matList = new List<Material>();
         //创建材质名列表
-        string matName = null;
+        //string matName = null;
         //创建临时材质名变量
-        Dictionary<string, List<Transform>> nameBox = new Dictionary<string, List<Transform>>();//创建一个字典用以关联材质名与使用此材质的对象与列表
+        //Dictionary<string, List<Transform>> nameBox = new Dictionary<string, List<Transform>>();//创建一个字典用以关联材质名与使用此材质的对象与列表
         //创建材质名与对象关联字典
         Texture2D t = null;
         //临时贴图
 
         Material[] matTmp = null;//创建用于最后更新对象材质的时候的材质数组
+        List<Transform> objMatRefList = new List<Transform>(); // 用于记录有render的对象
+
+        List<GameObject> lightList = new List<GameObject>();//用于取得全部灯光
+        GameObject[] lightTmp = (GameObject[])GameObject.FindObjectsOfType<GameObject>();
+
+        string[] texNames = new string[5] { "_MainTex", "_BumpMap", "_Detail", "_ParallaxMap", "_Parallax" };
+
 
         MatAndTexFunction cre = new MatAndTexFunction();
         //调用
 
-        string[] texNames = new string[5]{"_MainTex", "_BumpMap", "_Detail", "_ParallaxMap", "_Parallax"};
+        foreach (GameObject o in lightTmp)
+        {
+            if (o.GetComponent<Light>()){
+                lightList.Add(o);
+            }
+        }//获取全部灯光
+        for (int l = 0; l < lightList.Count;l++)
+        {
+            lightList[l].light.enabled = false;
+        }//关闭场景全部灯光
+
 
         for (int i = 0; i < obj.Length; i++)
         {
-            cre.getAllChild(obj[i].transform, ref matName, ref nameBox, ref matList);
+            cre.getAllChild(obj[i].transform, ref matList, ref objMatRefList);
+                //cre.getAllChildMix(obj[i].transform,ref objMatRefList);
             //创建整个场景对象与材质关系列表
         }
 
@@ -270,22 +293,27 @@ public class BakeTex : EditorWindow {
         {
             case "0":
 
-                for (int k = 0; k < obj.Length; k++)
+                for (int k = 0; k < objMatRefList.Count; k++)
                 {
-                    matTmp = new Material[obj[k].renderer.sharedMaterials.Length];
+                        matTmp = new Material[objMatRefList[k].renderer.sharedMaterials.Length];
 
-                    for (int l = 0; l < obj[k].renderer.sharedMaterials.Length; l++)
-                    {
-                        //obj[k].renderer.sharedMaterials[l] = (Material)Resources.LoadAssetAtPath(matPath + "/" + obj[k].renderer.sharedMaterials[l].name + ".mat", typeof(Material));
+                        for (int l = 0; l < objMatRefList[k].renderer.sharedMaterials.Length; l++)
+                        {
+                            //obj[k].renderer.sharedMaterials[l] = (Material)Resources.LoadAssetAtPath(matPath + "/" + obj[k].renderer.sharedMaterials[l].name + ".mat", typeof(Material));
 
-                        matTmp[l] = (Material)Resources.LoadAssetAtPath(matPath + "/" + obj[k].renderer.sharedMaterials[l].name + ".mat", typeof(Material));
+                            matTmp[l] = (Material)Resources.LoadAssetAtPath(matPath + "/" + objMatRefList[k].renderer.sharedMaterials[l].name + ".mat", typeof(Material));
 
-                    }
-                    obj[k].renderer.sharedMaterials = matTmp;
-                    matTmp = null;
+                        }
+                        objMatRefList[k].renderer.sharedMaterials = matTmp;
+                        matTmp = null;
                 }
                     break;
         }
             cre.breakScene();
+            for (int l = 0; l < lightList.Count; l++)
+            {
+                lightList[l].light.enabled = true;
+            }//打开场景全部灯光
     }
+    
 }

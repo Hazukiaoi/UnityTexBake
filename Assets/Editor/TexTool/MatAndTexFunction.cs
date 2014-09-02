@@ -7,30 +7,65 @@ using System.Collections.Generic;
 public class MatAndTexFunction
 {
 
-    public void getAllChild(Transform tran, ref string matName, ref Dictionary<string, List<Transform>> nameBox, ref List<Material> matList)
+   /* public void getAllChild(Transform tran, ref string matName, ref Dictionary<string, List<Transform>> nameBox, ref List<Material> matList)
     {
-        for (int i = 0; i < tran.renderer.sharedMaterials.Length; i++)
-        {
-            matName = tran.renderer.sharedMaterials[i].name;
-            if (!nameBox.ContainsKey(matName))
+        if (tran.GetComponent<Renderer>() != null) { //剔除没有render的对象
+            for (int i = 0; i < tran.renderer.sharedMaterials.Length; i++)
             {
-                matList.Add(tran.renderer.sharedMaterials[i]);
-                nameBox.Add(matName, new List<Transform>());//如果此名字的材质未被使用，则创建一个以此名称命名的字典，并创建一个新的对象列表用于记录使用此材质的对象。
-                nameBox[matName].Add(tran);
-            }
-            else
-            {
-                if (!nameBox[matName].Contains(tran))
+                matName = tran.renderer.sharedMaterials[i].name;
+                if (!nameBox.ContainsKey(matName))
                 {
-                    nameBox[matName].Add(tran);//如果此材质名已存在,并且不存在于列表内，则把此对象添加到字典内对应的List内
+                    matList.Add(tran.renderer.sharedMaterials[i]);
+                    nameBox.Add(matName, new List<Transform>());//如果此名字的材质未被使用，则创建一个以此名称命名的字典，并创建一个新的对象列表用于记录使用此材质的对象。
+                    nameBox[matName].Add(tran);
                 }
-            }
-        }//不管有没子对象的时候
+                else
+                {
+                    if (!nameBox[matName].Contains(tran))
+                    {
+                        nameBox[matName].Add(tran);//如果此材质名已存在,并且不存在于列表内，则把此对象添加到字典内对应的List内
+                    }
+                }
+            }//不管有没子对象的时候
+        }
         for (int j = 0; j < tran.childCount; j++)
         {
             getAllChild(tran.GetChild(j), ref matName, ref nameBox, ref matList);
         }//有子对象的时候
-    }//递归的第一次成功
+    }//递归的第一次成功*/
+    public void getAllChild(Transform tran, ref List<Material> matList,ref List<Transform> objList)
+    {
+        if (tran.GetComponent<Renderer>() != null)
+        { //剔除没有render的对象
+            objList.Add(tran);
+            for (int i = 0; i < tran.renderer.sharedMaterials.Length; i++)
+            {
+                if (matList.Contains(tran.renderer.sharedMaterials[i]) == false)
+                {
+                    matList.Add(tran.renderer.sharedMaterials[i]);
+                }
+
+            }//不管有没子对象的时候
+        }
+        for (int j = 0; j < tran.childCount; j++)
+        {
+            getAllChild(tran.GetChild(j),ref matList,ref objList);
+        }//有子对象的时候
+    }
+
+    /*public void getAllChildMix(Transform tran, ref List<Transform> objList)
+    {
+        if (tran.GetComponent<Renderer>() != null)
+        {
+            Debug.Log(tran.name);
+            objList.Add(tran);
+        }
+
+        for (int i = 0; i < tran.childCount; i++)
+        {
+            getAllChildMix(tran.GetChild(i), ref objList);
+        }
+    }*/
     public void saveTex(Texture2D t, string savePath, string texName, int tf)
     {
         byte[] tex = null;
@@ -167,13 +202,6 @@ public class MatAndTexFunction
         AssetDatabase.CreateAsset(mat, savePath + "/" + matName + ".mat");
         AssetDatabase.Refresh();
     }//保存材质
-    public Texture2D checkCameraCa(Camera cam)
-    {
-        Rect r = cam.camera.pixelRect;
-        cam.Render();
-        Texture2D t = new Texture2D(Mathf.FloorToInt(r.xMax), Mathf.FloorToInt(r.yMax));
-        t.ReadPixels(r, 0, 0);
-        return t;
-    }
 
+    
 }
